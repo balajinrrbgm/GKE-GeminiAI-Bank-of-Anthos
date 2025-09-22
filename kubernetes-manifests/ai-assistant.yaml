@@ -1,0 +1,150 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-assistant
+  labels:
+    app: ai-assistant
+    version: v1.0.0
+    tier: backend
+    team: ai
+    application: bank-of-anthos
+    environment: development
+spec:
+  selector:
+    matchLabels:
+      app: ai-assistant
+  template:
+    metadata:
+      labels:
+        app: ai-assistant
+        version: v1.0.0
+        tier: backend
+        team: ai
+        application: bank-of-anthos
+        environment: development
+      annotations:
+        proxy.istio.io/config: '{ "holdApplicationUntilProxyStarts": true }'
+    spec:
+      serviceAccountName: bank-of-anthos
+      terminationGracePeriodSeconds: 5
+      containers:
+      - name: ai-assistant
+        image: asia-south1-docker.pkg.dev/bank-anthos-ai-india/bank-of-anthos/ai-assistant:v1.1.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: VERSION
+          value: "v1.0.0"
+        - name: PORT
+          value: "8080"
+        - name: ENABLE_TRACING
+          value: "true"
+        - name: ENABLE_METRICS
+          value: "true"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gemini-api-key
+              key: api-key
+        - name: USERSERVICE_URL
+          value: "http://userservice:8080"
+        - name: BALANCEREADER_URL
+          value: "http://balancereader:8080"
+        - name: TRANSACTIONHISTORY_URL
+          value: "http://transactionhistory:8080"
+        - name: CONTACTS_URL
+          value: "http://contacts:8080"
+        envFrom:
+        - configMapRef:
+            name: environment-config
+        - configMapRef:
+            name: service-api-config
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 5
+          timeoutSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 120
+          periodSeconds: 5
+          timeoutSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 1
+          failureThreshold: 30
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - all
+          privileged: false
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: publickey
+          mountPath: /tmp/.ssh
+          readOnly: true
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: publickey
+        secret:
+          secretName: jwt-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-assistant
+  labels:
+    app: ai-assistant
+    tier: backend
+    team: ai
+    application: bank-of-anthos
+    environment: development
+spec:
+  type: ClusterIP
+  selector:
+    app: ai-assistant
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
