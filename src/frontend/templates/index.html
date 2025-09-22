@@ -137,11 +137,115 @@ limitations under the License.
               </div>
             </div>
             <div class="card-body" id="ai-insights-content">
-              <div class="text-center py-3">
+              <!-- Financial Summary Cards -->
+              <div class="row mb-4" id="financial-summary" style="display: none;">
+                <div class="col-md-3">
+                  <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                      <h5 class="card-title">Current Balance</h5>
+                      <h3 id="summary-balance">$0.00</h3>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                      <h5 class="card-title">Health Score</h5>
+                      <h3 id="summary-health-score">0/100</h3>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                      <h5 class="card-title">Net Change</h5>
+                      <h3 id="summary-net-change">$0.00</h3>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                      <h5 class="card-title">Top Category</h5>
+                      <h3 id="summary-top-category">-</h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Financial Charts -->
+              <div class="row mb-4" id="financial-charts" style="display: none;">
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="card-title">Monthly Spending Trends</h6>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="monthly-spending-chart" height="200"></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="card-title">Income vs Expenses</h6>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="income-expense-chart" height="200"></canvas>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-4" id="category-charts" style="display: none;">
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="card-title">Spending by Category</h6>
+                    </div>
+                    <div class="card-body">
+                      <canvas id="category-pie-chart" height="200"></canvas>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="card-title">Financial Health</h6>
+                    </div>
+                    <div class="card-body text-center">
+                      <div id="health-gauge" style="height: 200px;">
+                        <div class="progress" style="height: 30px; margin-top: 80px;">
+                          <div id="health-progress" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI Insights Text -->
+              <div class="row" id="ai-insights-text" style="display: none;">
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 class="card-title">🧠 Detailed Financial Analysis</h6>
+                    </div>
+                    <div class="card-body">
+                      <div id="ai-insights-content-text" class="ai-insights-text">
+                        <!-- AI insights will be loaded here -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loading State -->
+              <div class="text-center py-3" id="ai-loading">
                 <div class="spinner-border text-primary" role="status">
                   <span class="sr-only">Loading insights...</span>
                 </div>
-                <p class="mt-2">Analyzing your financial data...</p>
+                <p class="mt-2">Analyzing your financial data with AI...</p>
               </div>
             </div>
           </div>
@@ -433,6 +537,8 @@ limitations under the License.
 {% include 'shared/scripts.html' %}
     <!-- Page specific-->
     <script src="static/scripts/index.js"></script>
+    <!-- Chart.js for Financial Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- AI Assistant Scripts -->
     <script src="static/scripts/ai-assistant.js"></script>
   </body>

@@ -43,7 +43,7 @@ spec:
       terminationGracePeriodSeconds: 5
       containers:
       - name: ai-assistant
-        image: asia-south1-docker.pkg.dev/bank-anthos-ai-india/bank-of-anthos/ai-assistant:v1.1.0
+        image: asia-south1-docker.pkg.dev/bank-anthos-ai-india/bank-of-anthos/ai-assistant:v1.3.0
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

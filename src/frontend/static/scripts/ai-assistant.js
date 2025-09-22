@@ -1,9 +1,10 @@
-// AI Assistant JavaScript
+// AI Assistant JavaScript with Enhanced Visualizations
 // Copyright 2025 Google LLC
 
 // AI Assistant functionality
 let chatExpanded = true;
 let isTyping = false;
+let charts = {}; // Store chart instances
 
 // Initialize AI features when page loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -32,7 +33,279 @@ function initializeAIFeatures() {
         });
     }
 
-    console.log('AI Assistant features initialized');
+    console.log('AI Assistant features initialized with enhanced visualizations');
+}
+
+// Load AI insights with enhanced visualization
+async function loadAIInsights() {
+    try {
+        console.log('Loading enhanced AI insights...');
+        showLoadingState();
+        
+        const response = await fetch('/api/ai/insights/{{ account_id }}');
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Enhanced insights loaded:', data);
+            displayEnhancedInsights(data);
+        } else {
+            console.error('Failed to load insights:', response.status);
+            showInsightsError('Failed to load AI insights. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error loading insights:', error);
+        showInsightsError('Error connecting to AI service. Please check your connection.');
+    }
+}
+
+function displayEnhancedInsights(data) {
+    // Hide loading state
+    document.getElementById('ai-loading').style.display = 'none';
+    
+    // Show summary cards
+    if (data.summary) {
+        updateSummaryCards(data.summary);
+        document.getElementById('financial-summary').style.display = 'block';
+    }
+    
+    // Show charts if visualization data is available
+    if (data.visualizations) {
+        createFinancialCharts(data.visualizations);
+        document.getElementById('financial-charts').style.display = 'block';
+        document.getElementById('category-charts').style.display = 'block';
+    }
+    
+    // Show AI insights text
+    if (data.insights) {
+        displayInsightsText(data.insights);
+        document.getElementById('ai-insights-text').style.display = 'block';
+    }
+}
+
+function updateSummaryCards(summary) {
+    // Update balance
+    const balanceElement = document.getElementById('summary-balance');
+    if (balanceElement && summary.balance) {
+        balanceElement.textContent = `$${summary.balance.toFixed(2)}`;
+    }
+    
+    // Update health score
+    const healthElement = document.getElementById('summary-health-score');
+    if (healthElement && summary.health_score !== undefined) {
+        healthElement.textContent = `${summary.health_score}/100`;
+        
+        // Update progress bar
+        const progressElement = document.getElementById('health-progress');
+        if (progressElement) {
+            progressElement.style.width = `${summary.health_score}%`;
+            progressElement.textContent = `${summary.health_score}%`;
+            
+            // Color code based on score
+            if (summary.health_score >= 80) {
+                progressElement.className = 'progress-bar bg-success';
+            } else if (summary.health_score >= 60) {
+                progressElement.className = 'progress-bar bg-warning';
+            } else {
+                progressElement.className = 'progress-bar bg-danger';
+            }
+        }
+    }
+    
+    // Update net change
+    const netElement = document.getElementById('summary-net-change');
+    if (netElement && summary.net_change !== undefined) {
+        const netChange = summary.net_change;
+        netElement.textContent = `$${netChange.toFixed(2)}`;
+        netElement.style.color = netChange >= 0 ? '#28a745' : '#dc3545';
+    }
+    
+    // Update top category
+    const categoryElement = document.getElementById('summary-top-category');
+    if (categoryElement && summary.top_category) {
+        categoryElement.textContent = summary.top_category;
+    }
+}
+
+function createFinancialCharts(visualizations) {
+    // Destroy existing charts
+    Object.values(charts).forEach(chart => {
+        if (chart) chart.destroy();
+    });
+    charts = {};
+    
+    // Monthly Spending Chart
+    if (visualizations.monthly_spending_chart) {
+        createLineChart('monthly-spending-chart', visualizations.monthly_spending_chart);
+    }
+    
+    // Income vs Expense Chart
+    if (visualizations.income_vs_expense_chart) {
+        createBarChart('income-expense-chart', visualizations.income_vs_expense_chart);
+    }
+    
+    // Category Pie Chart
+    if (visualizations.category_pie_chart) {
+        createPieChart('category-pie-chart', visualizations.category_pie_chart);
+    }
+}
+
+function createLineChart(canvasId, chartData) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    
+    const data = chartData.data || {};
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    
+    charts[canvasId] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Amount ($)',
+                data: values,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createBarChart(canvasId, chartData) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    
+    const data = chartData.data || {};
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    
+    charts[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Amount ($)',
+                data: values,
+                backgroundColor: [
+                    '#28a745', // Income - green
+                    '#dc3545', // Expenses - red
+                    '#007bff'  // Net - blue
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createPieChart(canvasId, chartData) {
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    
+    const data = chartData.data || {};
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    
+    charts[canvasId] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: values,
+                backgroundColor: [
+                    '#007bff',
+                    '#28a745',
+                    '#ffc107',
+                    '#dc3545',
+                    '#6c757d',
+                    '#17a2b8',
+                    '#fd7e14'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function displayInsightsText(insights) {
+    const container = document.getElementById('ai-insights-content-text');
+    if (container && insights) {
+        // Format the insights text with better styling
+        const formattedInsights = formatInsightsText(insights);
+        container.innerHTML = formattedInsights;
+    }
+}
+
+function formatInsightsText(text) {
+    // Basic formatting for better readability
+    return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+        .replace(/\n\n/g, '</p><p>') // Paragraphs
+        .replace(/\n•/g, '<br>•') // Bullet points
+        .replace(/\n-/g, '<br>-') // Dash points
+        .replace(/\n(\d+\.)/g, '<br>$1') // Numbered lists
+        .replace(/^/, '<p>') // Start paragraph
+        .replace(/$/, '</p>'); // End paragraph
+}
+
+function showLoadingState() {
+    document.getElementById('ai-loading').style.display = 'block';
+    document.getElementById('financial-summary').style.display = 'none';
+    document.getElementById('financial-charts').style.display = 'none';
+    document.getElementById('category-charts').style.display = 'none';
+    document.getElementById('ai-insights-text').style.display = 'none';
+}
+
+function showInsightsError(message) {
+    document.getElementById('ai-loading').style.display = 'none';
+    const container = document.getElementById('ai-insights-content-text');
+    if (container) {
+        container.innerHTML = `<div class="alert alert-warning">${message}</div>`;
+        document.getElementById('ai-insights-text').style.display = 'block';
+    }
+}
+
+// Refresh insights function
+function refreshAIInsights() {
+    console.log('Refreshing AI insights...');
+    loadAIInsights();
 }
 
 // Toggle chat widget expanded/collapsed state
